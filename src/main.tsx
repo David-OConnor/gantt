@@ -73,9 +73,9 @@ function dateFromPart(date: Date, part: number, val: number) {
     } else if (part === 1) {
         val -= 1  // To convert back from 1-12 visual range to 0 - 11.
         if (val > 11) {
-            val -= 11
+            val -= 12
         } else if (val < 0) {
-            val += 11
+            val += 12
         }
         return new Date(date.getFullYear(), val, date.getUTCDate())
     } else if (part === 2) {
