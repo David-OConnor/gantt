@@ -91,23 +91,23 @@ function dateFromPart(date: Date, part: number, val: number) {
     }
 }
 
-const EditDate = ({date, cb}: {date: Date, cb: Function}) => {
+const EditDate = ({date, style, cb}: {date: Date, style: any, cb: Function}) => {
     return (
         <>
         <input 
-            style={{width: 70, margin: 'auto'}}
+            style={{...style, width: 70, margin: 'auto'}}
             type="number"
             value={date.getFullYear().toString().substr(-2)}
             onChange={(e) => {cb(dateFromPart(date, 0, parseInt(e.target.value)))}}
         ></input>
         <input 
-            style={{width: 70, margin: 'auto'}}
+            style={{...style, width: 70, margin: 'auto'}}
             type="number"
             value={date.getMonth() + 1}
             onChange={(e) => {cb(dateFromPart(date, 1, parseInt(e.target.value)))}}
         ></input>
         <input 
-            style={{width: 70, margin: 'auto'}}
+            style={{...style, width: 70, margin: 'auto'}}
             type="number"
             value={date.getUTCDate()}
             onChange={(e) => {cb(dateFromPart(date, 2, parseInt(e.target.value)))}}
@@ -117,12 +117,18 @@ const EditDate = ({date, cb}: {date: Date, cb: Function}) => {
 }
 
 const EditRow = ({i, event, orgs, cb}: {i: number, event: Event, 
-        orgs: Organization[], cb: Function}) => {
-            const baseStyle = {gridRowStart: i + 2, gridRowEnd: i + 3}
+            orgs: Organization[], cb: Function}) => {
+
+        const baseStyle = {gridRowStart: i + 2, gridRowEnd: i + 3}
+        let inputStyle = {backgroundColor: event.org.color}
+        if (event.org.name === '4 FW') {
+            inputStyle['color'] = 'white'
+        }
     return (
         <>
         <div style={{...baseStyle, gridColumn: '1 / 2'}}>
-            <input 
+            <input
+                style={inputStyle}
                 type="text"
                 value={event.name}
                 onChange={(e) => {cb(event.id, 'name', e.target.value)}}
@@ -131,6 +137,7 @@ const EditRow = ({i, event, orgs, cb}: {i: number, event: Event,
 
         <div style={{...baseStyle, gridColumn: '2 / 3'}}>
             <select
+                style={inputStyle}
                 value={event.org.id}
                 onChange={(e) => {cb(event.id, 'org', e.target.value)}}
             >
@@ -139,11 +146,11 @@ const EditRow = ({i, event, orgs, cb}: {i: number, event: Event,
         </div>
 
         <div style={{...baseStyle, display: 'float', gridColumn: '3 / 4'}}>
-            <EditDate date={event.start} cb={(val: number) => cb(event.id, 'start', val)} />
+            <EditDate date={event.start} style={inputStyle} cb={(val: number) => cb(event.id, 'start', val)} />
         </div>
 
         <div style={{...baseStyle, gridColumn: '4 / 5'}}>
-            <EditDate date={event.end} cb={(val: number) => cb(event.id, 'end', val)} />
+            <EditDate date={event.end} style={inputStyle} cb={(val: number) => cb(event.id, 'end', val)} />
         </div>
         </>
     )
