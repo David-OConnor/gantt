@@ -242,7 +242,7 @@ const Chart = ({events, month, changeMonth}: {events: Event[],
                             
                             // Allow wrapping across multiple months.
                             gridColumnStart: e.start.getMonth() < month[1] ? 1 : e.start.getUTCDate(),
-                            gridColumnEnd: e.end.getMonth() > month[1] ? numCols : e.start.getUTCDate() + 1,
+                            gridColumnEnd: e.end.getMonth() > month[1] ? numCols : e.end.getUTCDate() + 1,
 
                             maxHeight: 36,
                             paddingTop: 5,
