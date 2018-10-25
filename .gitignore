@@ -1,0 +1,26 @@
+# Standard ignores. They don't affect code usability.
+__pycache__/
+Thumbs.db
+*.egg-info/
+.ipynb_checkpoints/
+*/dist/
+
+# Commit build, since we're using Github to transfer files to work computers.
+# */build/
+
+/target/
+**/*.rs.bk
+
+*.wasm
+
+
+# Pycharm
+*.iws
+workspace.xml
+
+# Project-specific
+node_modules/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
