@@ -7,6 +7,7 @@ import * as ReactDOM from 'react-dom'
 const emptyColor = '#efefff'
 
 const BASE_URL = 'https://sched-chart.herokuapp.com/api/'
+// const BASE_URL = 'http://127.0.0.1:8000/api/'
 
 // const fmHStyle = {
 //     gridRow: '3 / 4',
@@ -29,11 +30,28 @@ const monthNames = ["January", "February", "March", "April", "May", "June",
 
 const monthNumDays = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
+function toIso(date: Date): string {
+    return date.getFullYear() + '-' + (date.getMonth() + 1).toString() + '-' + date.getUTCDate()
+}
+
 function save(events: Event[]) {
+    console.log("SAVING...")
+
+    // todo unknown issue getting map to work here.
+    const processedEvents: any = []
+    for (let event of events) {
+        processedEvents.push(
+            {
+                id: event.id,
+                name: event.name,
+                org: event.org.id,
+                start: toIso(event.start),
+                end: toIso(event.end),
+            }
+        )
+    }
     axios.post(
-        BASE_URL + 'save',
-        events
-    ).then(
+        BASE_URL + 'save', processedEvents).then(      
         (resp) => {
             if (resp.data.success) {
                 console.log('Saved')
@@ -48,11 +66,10 @@ function dateFromPart(date: Date, part: number, val: number) {
     // For use with the EditDate component.  part is 0 for year, 1 for mo, 2 for day
     // val is the new val
     
-
     let newDate
     if (part === 0) {
         val += 2000  // We displayed dates as 2 digit.
-        return new Date(val, date.getMonth(), date.getDate())
+        return new Date(val, date.getMonth(), date.getUTCDate())
     } else if (part === 1) {
         val -= 1  // To convert back from 1-12 visual range to 0 - 11.
         if (val >= 11) {
@@ -60,7 +77,7 @@ function dateFromPart(date: Date, part: number, val: number) {
         } else if (val < 0) {
             val += 11
         }
-        return new Date(date.getFullYear(), val, date.getDate())
+        return new Date(date.getFullYear(), val, date.getUTCDate())
     } else if (part === 2) {
         if (val > monthNumDays[date.getMonth()]) {
             val -= monthNumDays[date.getMonth()]
@@ -75,7 +92,6 @@ function dateFromPart(date: Date, part: number, val: number) {
 }
 
 const EditDate = ({date, cb}: {date: Date, cb: Function}) => {
-
     return (
         <>
         <input 
@@ -93,7 +109,7 @@ const EditDate = ({date, cb}: {date: Date, cb: Function}) => {
         <input 
             style={{width: 70, margin: 'auto'}}
             type="number"
-            value={date.getDate()}
+            value={date.getUTCDate()}
             onChange={(e) => {cb(dateFromPart(date, 2, parseInt(e.target.value)))}}
         ></input>
         </>
@@ -164,7 +180,7 @@ const Editor = ({events, orgs, changeEvent, addEvent}: {events: Event[], orgs: O
                 <h3>End</h3>
             </div>
             
-            {events.sort((a: any, b: any) => b.end - a.end).map((e, i) => 
+            {events.sort((a: any, b: any) => b.id - a.id).map((e, i) => 
                 <EditRow key={e.id} i={i} event={e} orgs={orgs} cb={changeEvent} />)}
         </form>
         </>
@@ -179,6 +195,8 @@ const Chart = ({events, month, changeMonth}: {events: Event[],
     // I don't think JS has a built-in range.
     const days = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
         17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+
+    events = events.sort((a: any, b: any) => a.org.order - b.org.order)
 
     // Setting eventRows ahead of time lets us group events with the same name
     // on the same row.
@@ -221,16 +239,18 @@ const Chart = ({events, month, changeMonth}: {events: Event[],
                         style={{
                             gridRowStart: nameRows.get(e.name.toLowerCase()),
                             gridRowEnd: nameRows.get(e.name.toLowerCase()) + 1,
-                            gridColumnStart: e.start.getDate(),
-                            gridColumnEnd: e.end.getDate() + 1,
+                            gridColumnStart: e.start.getUTCDate(),
+                            gridColumnEnd: e.end.getUTCDate() + 1,
 
                             maxHeight: 36,
                             paddingTop: 5,
                             paddingBottom: 5,
-                            fontSize: '.9em',
+                            fontSize: '.8em',
+                            // todo should just have a font color property for orgs.
+                            color: e.org.name ==='4 FW' ? '#ffffff' : 'black',
                             backgroundColor: e.org.color,
                         }}>
-                        {e.name + " " + e.start.getDate() + " - " + e.end.getDate()}
+                        {e.name + " " + e.start.getUTCDate() + " - " + e.end.getUTCDate()}
                     </div>)}
             </div>
         </div>
@@ -248,11 +268,11 @@ function eventOnDay(event: Event, date: [number, number, number]): boolean {
 
 function eventStartsOnDay(event: Event, date: [number, number, number]): boolean {
    return event.start.getFullYear() === date[0] 
-   && event.start.getMonth() === date[1] && event.start.getDate() === date[2]
+   && event.start.getMonth() === date[1] && event.start.getUTCDate() === date[2]
 }
 
 function dateToStr(date: Date): string {
-    return date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate()
+    return date.getFullYear() + '-' + date.getMonth() + '-' + date.getUTCDate()
 }
 
 interface Organization {
@@ -286,48 +306,10 @@ class Main extends React.Component<MainProps, MainState> {
         super(props)
         
         const currentDate = new Date()
-        const orgs = [
-            {
-                id: 0,
-                name: '336 FS',
-                color: '#ffff00',
-                order: 1,
-            },
-            {
-                id: 1,
-                name: '333 FS',
-                color: '#ff0000',
-                order: 2,
-            }
-
-        ]
-
+        
         this.state = {
-            orgs: orgs,
-            events: [
-                {
-                    id: 0,
-                    name: "Party",
-                    org: orgs[0],
-                    start: new Date(2018, 9, 3),
-                    end: new Date(2018, 9, 15),
-                },
-                {
-                    id: 1,
-                    name: "serious meeting",
-                    org: orgs[1],
-                    start: new Date(2018, 9, 5),
-                    end: new Date(2018, 9, 10),
-                },
-                {
-                id: 2,
-                    name: "Serious meeting",
-                    org: orgs[0],
-                    start: new Date(2018, 9, 20),
-                    end: new Date(2018, 9, 22),
-                },
-
-            ],
+            orgs: [],
+            events: [],
             page: 0,
             month: [currentDate.getFullYear(), currentDate.getMonth()]
         }
@@ -340,6 +322,12 @@ class Main extends React.Component<MainProps, MainState> {
     changeEvent(id: number, attr: string, v: any) {
         // Processes the value from event.target.
          let event = this.state.events.filter(e => e.id === id)[0]
+
+
+        if (attr === 'org') {
+            v = this.state.orgs.filter(o => o.id === parseInt(v))[0]
+        }
+
         event[attr] = v
         const updated = [...this.state.events.filter(e => e.id !== id), event]
         this.setState({events: updated})
@@ -368,6 +356,34 @@ class Main extends React.Component<MainProps, MainState> {
     // changeDatePart(attr: string, val: number, part: number) {
     //     // attr is 'start' or 'end', val is the number, part is 0 for year, 1 for mo, 2 for day.
     // }
+
+    componentDidMount() {
+        axios.get(BASE_URL + 'orgs').then(
+            (resp) => {
+                this.setState({orgs: resp.data.results})
+
+                // Don't load events until orgs are loaded, since events ref orgs.
+                axios.get(BASE_URL + 'events').then(
+                    (resp) => {
+                        let events = []
+                        for (let event of resp.data.results) {
+                            events.push({
+                                id: event.id,
+                                name: event.name,
+                                org: this.state.orgs.filter(o => o.id === parseInt(event.org))[0],
+                                // The Date constructor should automatically parse the ISO date input.
+                                start: new Date(event.start), 
+                                end: new Date(event.end)
+                            })
+                        }
+                        this.setState({events: events})
+                    }
+                )
+
+            }            
+        )
+
+    }
 
     render() {
         const currentMoStart = new Date(this.state.month[0], this.state.month[1], 1)
