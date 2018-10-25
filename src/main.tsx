@@ -211,7 +211,7 @@ const Chart = ({events, month, changeMonth}: {events: Event[],
         nameRows.set(event.name.toLowerCase(), row_i)
         row_i += 1
     }
-
+    
     return (
         <div>
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
@@ -239,8 +239,10 @@ const Chart = ({events, month, changeMonth}: {events: Event[],
                         style={{
                             gridRowStart: nameRows.get(e.name.toLowerCase()),
                             gridRowEnd: nameRows.get(e.name.toLowerCase()) + 1,
-                            gridColumnStart: e.start.getUTCDate(),
-                            gridColumnEnd: e.end.getUTCDate() + 1,
+                            
+                            // Allow wrapping across multiple months.
+                            gridColumnStart: e.start.getMonth() < month[1] ? 1 : e.start.getUTCDate(),
+                            gridColumnEnd: e.end.getMonth() > month[1] ? numCols : e.start.getUTCDate() + 1,
 
                             maxHeight: 36,
                             paddingTop: 5,
@@ -250,7 +252,8 @@ const Chart = ({events, month, changeMonth}: {events: Event[],
                             color: e.org.name ==='4 FW' ? '#ffffff' : 'black',
                             backgroundColor: e.org.color,
                         }}>
-                        {e.name + " " + e.start.getUTCDate() + " - " + e.end.getUTCDate()}
+                        {e.name + " " + (e.start.getUTCDate() === e.end.getUTCDate() ? e.start.getUTCDate() :
+                            e.start.getUTCDate() + " - " + e.end.getUTCDate())}
                     </div>)}
             </div>
         </div>
@@ -390,7 +393,7 @@ class Main extends React.Component<MainProps, MainState> {
         // todo real month end
         const currentMoEnd = new Date(this.state.month[0], this.state.month[1], 28)
         const eventsThisMonth = this.state.events.filter(e => 
-            e.start >= currentMoStart && e.end <= currentMoEnd
+            e.start <= currentMoEnd && e.end >= currentMoStart
         )
 
         return (
