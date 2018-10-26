@@ -200,10 +200,8 @@ const Chart = ({events, month, changeMonth}: {events: Event[],
     // month is a (year, month) tuple.
     const numCols = monthNumDays[month[1]]
     // I don't think JS has a built-in range.
-    let days = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
-
-    days = days.slice(0, numCols)
+    const days = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31].slice(0, numCols)
 
     events = events.sort((a: any, b: any) => a.org.order - b.org.order)
 
@@ -310,6 +308,7 @@ interface MainState {
     page: number  // 0 for chart, 1 for editor
     // months range from 0 to 11.
     month: [number, number]  // [year, month]
+    loading: boolean
 }
 
 
@@ -323,7 +322,8 @@ class Main extends React.Component<MainProps, MainState> {
             orgs: [],
             events: [],
             page: 0,
-            month: [currentDate.getFullYear(), currentDate.getMonth()]
+            month: [currentDate.getFullYear(), currentDate.getMonth()],
+            loading: true,
         }
 
         this.changeEvent = this.changeEvent.bind(this)
@@ -389,6 +389,7 @@ class Main extends React.Component<MainProps, MainState> {
                             })
                         }
                         this.setState({events: events})
+                        this.setState({loading: false})
                     }
                 )
 
@@ -419,10 +420,12 @@ class Main extends React.Component<MainProps, MainState> {
                     style={{marginBottom: 20}}
                     onClick={() => {
                         this.setState({page: this.state.page === 0 ? 1 : 0})
-                        save(this.state.events)
+                        // save(this.state.events)
                     }}>
                     {this.state.page === 0 ? "Edit" : "View"}
                 </button>
+
+                {this.state.loading ? <h1>Loading...</h1>: null}
 
                 {this.state.page === 0 ? 
                     <Chart events={eventsThisMonth} month={this.state.month} changeMonth={this.changeMonth}/> : 
